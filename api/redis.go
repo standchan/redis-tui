@@ -178,8 +178,6 @@ func RedisServerInfo(conf config.Config, client RedisClient) (string, error) {
 			default:
 				uptimeStr = fmt.Sprintf("%ds", secs)
 			}
-		} else {
-			return "", err
 		}
 	}
 
