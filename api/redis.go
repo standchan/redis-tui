@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -114,7 +115,7 @@ func KeysWithLimit(client RedisClient, key string, maxScanCount int) (redisKeys 
 	var keys []string
 
 	var scanCount = 0
-	for scanCount < maxScanCount || maxScanCount == -1{
+	for scanCount < maxScanCount || maxScanCount == -1 {
 		scanCount++
 
 		keys, cursor, err = client.Scan(cursor, key, 100).Result()
@@ -155,5 +156,33 @@ func RedisServerInfo(conf config.Config, client RedisClient) (string, error) {
 	if ks, ok := kvpairs[fmt.Sprintf("db%d", conf.DB)]; ok {
 		keySpace = ks
 	}
-	return fmt.Sprintf(" RedisVersion: %s    Memory: %s    Server: %s:%d/%d\n KeySpace: %s", kvpairs["redis_version"], kvpairs["used_memory_human"], conf.Host, conf.Port, conf.DB, keySpace), nil
+
+	// todo: uptime_in_days 可以用起来
+	uptimeStr := "-"
+
+	if uptimeSeconds, ok := kvpairs["uptime_in_seconds"]; ok {
+		uptimeSeconds = strings.TrimSpace(uptimeSeconds)
+		seconds, err := strconv.Atoi(uptimeSeconds)
+		if err == nil {
+			days := seconds / 86400
+			hours := (seconds % 86400) / 3600
+			minutes := (seconds % 3600) / 60
+			secs := seconds % 60
+
+			switch {
+			case days > 0:
+				uptimeStr = fmt.Sprintf("%dd%dh", days, hours)
+			case hours > 0:
+				uptimeStr = fmt.Sprintf("%dh%dm", hours, minutes)
+			case minutes > 0:
+				uptimeStr = fmt.Sprintf("%dm%ds", minutes, secs)
+			default:
+				uptimeStr = fmt.Sprintf("%ds", secs)
+			}
+		} else {
+			return "", err
+		}
+	}
+
+	return fmt.Sprintf(" RedisVersion: %s    Memory: %s    Server: %s:%d/%d\n KeySpace: %s    UpTime: %s", kvpairs["redis_version"], kvpairs["used_memory_human"], conf.Host, conf.Port, conf.DB, keySpace, uptimeStr), nil
 }
