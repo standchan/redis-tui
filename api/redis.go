@@ -157,7 +157,6 @@ func RedisServerInfo(conf config.Config, client RedisClient) (string, error) {
 		keySpace = ks
 	}
 
-	// todo: uptime_in_days 可以用起来
 	uptimeStr := "-"
 
 	if uptimeSeconds, ok := kvpairs["uptime_in_seconds"]; ok {
