@@ -30,6 +30,7 @@ type RedisTUI struct {
 	helpPanel           *tview.Flex
 	helpMessagePanel    *tview.TextView
 	helpServerInfoPanel *tview.TextView
+	dbSelectorPanel     *tview.DropDown
 
 	commandPanel       *tview.Flex
 	commandInputField  *tview.InputField
@@ -93,11 +94,13 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 	ui.itemSelectedHandler = ui.createKeySelectedHandler()
 	ui.searchPanel = ui.createSearchPanel()
 	ui.helpPanel = ui.createHelpPanel()
+	ui.dbSelectorPanel = ui.createDBSelectorPanel()
 
 	ui.commandPanel = ui.createCommandPanel()
 
 	ui.leftPanel = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(ui.searchPanel, 3, 0, false).
+		AddItem(ui.dbSelectorPanel, 3, 0, false).
 		AddItem(ui.keyItemsPanel, 0, 1, false).
 		AddItem(ui.summaryPanel, 3, 1, false)
 
@@ -110,6 +113,7 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 		AddItem(ui.rightPanel, 0, 8, false)
 
 	ui.focusPrimitives = append(ui.focusPrimitives, primitiveKey{Primitive: ui.searchPanel, Key: ui.keyBindings.KeyID("search")})
+	ui.focusPrimitives = append(ui.focusPrimitives, primitiveKey{Primitive: ui.dbSelectorPanel, Key: ui.keyBindings.KeyID("db_selector")})
 	ui.focusPrimitives = append(ui.focusPrimitives, primitiveKey{Primitive: ui.keyItemsPanel, Key: ui.keyBindings.KeyID("keys")})
 
 	ui.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -640,9 +644,10 @@ func (ui *RedisTUI) createHelpPanel() *tview.Flex {
 
 	ui.helpMessagePanel = tview.NewTextView()
 	ui.helpMessagePanel.SetTextColor(tcell.ColorOrange).SetText(fmt.Sprintf(
-		" ❈ %s - open command panel, %s - switch focus, %s - quit",
+		" ❈ %s - 打开命令面板, %s - 切换焦点, %s - 数据库选择, %s - 退出",
 		ui.keyBindings.Name("command"),
 		ui.keyBindings.Name("switch_focus"),
+		ui.keyBindings.Name("db_selector"),
 		ui.keyBindings.Name("quit"),
 	))
 
@@ -790,4 +795,67 @@ func limit(input []string, maxReturn int) []string {
 	}
 
 	return input[:maxReturn]
+}
+
+func (ui *RedisTUI) createDBSelectorPanel() *tview.DropDown {
+	dbSelector := tview.NewDropDown().SetLabel(" DB ")
+
+	// 添加 0-15 号数据库选项
+	for i := 0; i < 16; i++ {
+		dbSelector.AddOption(fmt.Sprintf("%d", i), nil)
+	}
+
+	// 设置当前选中的数据库
+	dbSelector.SetCurrentOption(ui.config.DB)
+
+	// 设置选择变更处理函数
+	dbSelector.SetSelectedFunc(func(text string, index int) {
+		if index == ui.config.DB {
+			return // 如果选择的是当前数据库，不做任何操作
+		}
+
+		// 更新配置
+		ui.config.DB = index
+
+		// 创建新的 Redis 客户端
+		newClient := api.NewRedisClient(ui.config, ui.outputChan)
+		ui.redisClient = newClient
+
+		// 清空键列表
+		ui.keyItemsPanel.Clear()
+
+		// 更新服务器信息
+		go func() {
+			info, err := api.RedisServerInfo(ui.config, ui.redisClient)
+			if err != nil {
+				ui.outputChan <- core.OutputMessage{Color: tcell.ColorRed, Message: fmt.Sprintf("errors: %s", err)}
+				return
+			}
+
+			ui.uiViewUpdateChan <- func() {
+				ui.helpServerInfoPanel.SetText(info)
+			}
+
+			// 重新加载键列表
+			keys, err := api.RedisAllKeys(ui.redisClient, false)
+			if err != nil {
+				ui.outputChan <- core.OutputMessage{Color: tcell.ColorRed, Message: fmt.Sprintf("errors: %s", err)}
+				return
+			}
+
+			ui.uiViewUpdateChan <- func() {
+				ui.summaryPanel.SetText(fmt.Sprintf(" Total matched: %d", len(keys)))
+
+				for i, k := range limit(keys, ui.maxKeyLimit) {
+					ui.keyItemsPanel.AddItem(ui.keyItemsFormat(i, k), "", 0, ui.itemSelectedHandler(i, k))
+				}
+			}
+		}()
+
+		ui.outputChan <- core.OutputMessage{Color: tcell.ColorGreen, Message: fmt.Sprintf("切换到数据库 %d", index)}
+	})
+
+	dbSelector.SetBorder(true).SetTitle(fmt.Sprintf(" DB Selector (%s) ", ui.keyBindings.Name("db_selector")))
+
+	return dbSelector
 }

@@ -1,8 +1,9 @@
 package core
 
 import (
-	"github.com/gdamore/tcell"
 	"strings"
+
+	"github.com/gdamore/tcell"
 )
 
 type KeyBindings map[string][]tcell.Key
@@ -19,6 +20,7 @@ var keyBindings = KeyBindings{
 	"command_result":   {tcell.KeyF5, tcell.KeyCtrlR},
 	"quit":             {tcell.KeyEsc, tcell.KeyCtrlQ},
 	"switch_focus":     {tcell.KeyTab},
+	"db_selector":      {tcell.KeyF10, tcell.KeyCtrlD},
 }
 
 func NewKeyBinding() KeyBindings {
