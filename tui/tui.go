@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gdamore/tcell"
+	"github.com/gdamore/tcell/v2"
 	"github.com/mylxsw/go-toolkit/collection"
 	"github.com/mylxsw/redis-tui/api"
 	"github.com/mylxsw/redis-tui/config"
@@ -374,7 +374,30 @@ func (ui *RedisTUI) Start() error {
 				ui.keyItemsPanel.AddItem(ui.keyItemsFormat(i, k), "", 0, ui.itemSelectedHandler(i, k))
 			}
 
-			ui.app.SetFocus(ui.keyItemsPanel)
+			// 重置所有面板边框颜色
+			for _, pv := range ui.focusPrimitives {
+				switch p := pv.Primitive.(type) {
+				case *tview.InputField:
+					p.SetBorderColor(tcell.ColorWhite)
+				case *tview.TextView:
+					p.SetBorderColor(tcell.ColorWhite)
+				case *tview.List:
+					p.SetBorderColor(tcell.ColorWhite)
+				case *tview.DropDown:
+					p.SetBorderColor(tcell.ColorWhite)
+				case *tview.Flex:
+					p.SetBorderColor(tcell.ColorWhite)
+				}
+			}
+
+			// 设置搜索面板的边框颜色为黄色
+			ui.searchPanel.SetBorderColor(tcell.ColorYellow)
+
+			// 将焦点设置在搜索面板上
+			ui.app.SetFocus(ui.searchPanel)
+
+			// 更新当前焦点索引为搜索面板的索引（0）
+			ui.currentFocusIndex = 0
 		})
 	}()
 
@@ -984,7 +1007,7 @@ func (ui *RedisTUI) createDBSelectorPanel() *tview.DropDown {
 			}
 		}()
 
-		ui.outputChan <- core.OutputMessage{Color: tcell.ColorGreen, Message: fmt.Sprintf("切换到数据库 %d", index)}
+		ui.outputChan <- core.OutputMessage{Color: tcell.ColorGreen, Message: fmt.Sprintf("switch to db %d", index)}
 	})
 
 	dbSelector.SetBorder(true).SetTitle(fmt.Sprintf(" DB Selector (%s) ", ui.keyBindings.Name("db_selector")))
