@@ -436,7 +436,7 @@ func (ui *RedisTUI) redrawRightPanel(center tview.Primitive) {
 		RemoveItem(ui.commandPanel).
 		RemoveItem(ui.helpPanel)
 
-	ui.rightPanel.AddItem(ui.helpPanel, 5, 1, false).
+	ui.rightPanel.AddItem(ui.helpPanel, 6, 1, false).
 		AddItem(ui.metaPanel, 4, 1, false).
 		AddItem(center, 0, 7, false).
 		AddItem(ui.outputPanel, 8, 1, false)
@@ -795,7 +795,7 @@ func (ui *RedisTUI) createHelpPanel() *tview.Flex {
 	helpPanel.SetBorder(true).SetTitle(fmt.Sprintf(" Version: %s (%s) ", ui.version, ui.gitCommit))
 
 	ui.helpServerInfoPanel = tview.NewTextView().SetDynamicColors(true).SetRegions(true)
-	helpPanel.AddItem(ui.helpServerInfoPanel, 2, 1, false)
+	helpPanel.AddItem(ui.helpServerInfoPanel, 3, 1, false)
 
 	ui.helpMessagePanel = tview.NewTextView()
 	ui.helpMessagePanel.SetTextColor(tcell.ColorOrange).SetText(fmt.Sprintf(

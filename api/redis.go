@@ -181,5 +181,6 @@ func RedisServerInfo(conf config.Config, client RedisClient) (string, error) {
 		}
 	}
 
-	return fmt.Sprintf(" RedisVersion: %s    Memory: %s    Server: %s:%d/%d\n KeySpace: %s    UpTime: %s", kvpairs["redis_version"], kvpairs["used_memory_human"], conf.Host, conf.Port, conf.DB, keySpace, uptimeStr), nil
+	return fmt.Sprintf(" RedisVersion: %s    Memory: %s    Server: %s:%d/%d		KeySpace: %s    UpTime: %s",
+		kvpairs["redis_version"], kvpairs["used_memory_human"], conf.Host, conf.Port, conf.DB, keySpace, uptimeStr), nil
 }
