@@ -1,6 +1,6 @@
 module github.com/mylxsw/redis-tui
 
-go 1.22
+go 1.21
 
 require (
 	github.com/gdamore/tcell/v2 v2.8.1
@@ -16,7 +16,6 @@ require (
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
