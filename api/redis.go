@@ -158,7 +158,7 @@ func RedisServerInfo(conf config.Config, client RedisClient) (string, error) {
 
 	uptimeStr := "-"
 	if uptimeSeconds, ok := kvpairs["uptime_in_seconds"]; ok {
-		uptimeStr, err = util.ParseTime(uptimeSeconds)
+		uptimeStr, err = util.FormatUptime(uptimeSeconds)
 		if err != nil {
 			uptimeStr = "-"
 		}

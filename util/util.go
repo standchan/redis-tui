@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-func ParseTime(uptimeSeconds string) (string, error) {
+func FormatUptime(uptimeSeconds string) (string, error) {
 	seconds, err := strconv.Atoi(uptimeSeconds)
 	if err != nil {
 		return "", err
