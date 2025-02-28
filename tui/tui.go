@@ -7,10 +7,10 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/mylxsw/go-toolkit/collection"
-	"github.com/mylxsw/redis-tui/api"
-	"github.com/mylxsw/redis-tui/config"
-	"github.com/mylxsw/redis-tui/core"
 	"github.com/rivo/tview"
+	"github.com/standchan/redis-tui/api"
+	"github.com/standchan/redis-tui/config"
+	"github.com/standchan/redis-tui/core"
 )
 
 type primitiveKey struct {

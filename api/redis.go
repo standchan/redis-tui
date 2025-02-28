@@ -2,16 +2,15 @@ package api
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/mylxsw/redis-tui/config"
-	"github.com/mylxsw/redis-tui/core"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/go-redis/redis"
+	"github.com/standchan/redis-tui/config"
+	"github.com/standchan/redis-tui/core"
+	"github.com/standchan/redis-tui/util"
 )
 
 type RedisClient interface {
@@ -158,26 +157,10 @@ func RedisServerInfo(conf config.Config, client RedisClient) (string, error) {
 	}
 
 	uptimeStr := "-"
-
 	if uptimeSeconds, ok := kvpairs["uptime_in_seconds"]; ok {
-		uptimeSeconds = strings.TrimSpace(uptimeSeconds)
-		seconds, err := strconv.Atoi(uptimeSeconds)
-		if err == nil {
-			days := seconds / 86400
-			hours := (seconds % 86400) / 3600
-			minutes := (seconds % 3600) / 60
-			secs := seconds % 60
-
-			switch {
-			case days > 0:
-				uptimeStr = fmt.Sprintf("%dd%dh", days, hours)
-			case hours > 0:
-				uptimeStr = fmt.Sprintf("%dh%dm", hours, minutes)
-			case minutes > 0:
-				uptimeStr = fmt.Sprintf("%dm%ds", minutes, secs)
-			default:
-				uptimeStr = fmt.Sprintf("%ds", secs)
-			}
+		uptimeStr, err = util.ParseTime(uptimeSeconds)
+		if err != nil {
+			uptimeStr = "-"
 		}
 	}
 

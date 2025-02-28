@@ -1,4 +1,4 @@
-module github.com/mylxsw/redis-tui
+module github.com/standchan/redis-tui
 
 go 1.21
 

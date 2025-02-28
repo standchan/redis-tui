@@ -1,8 +1,9 @@
 package api_test
 
 import (
-	"github.com/mylxsw/redis-tui/api"
 	"testing"
+
+	"github.com/standchan/redis-tui/api"
 )
 
 func TestRedisHelpMatch(t *testing.T) {
