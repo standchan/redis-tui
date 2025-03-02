@@ -795,11 +795,11 @@ func (ui *RedisTUI) createHelpPanel() *tview.Flex {
 	helpPanel.SetBorder(true).SetTitle(fmt.Sprintf(" Version: %s (%s) ", ui.version, ui.gitCommit))
 
 	ui.helpServerInfoPanel = tview.NewTextView().SetDynamicColors(true).SetRegions(true)
-	helpPanel.AddItem(ui.helpServerInfoPanel, 3, 1, false)
+	helpPanel.AddItem(ui.helpServerInfoPanel, 2, 1, false)
 
 	ui.helpMessagePanel = tview.NewTextView()
 	ui.helpMessagePanel.SetTextColor(tcell.ColorOrange).SetText(fmt.Sprintf(
-		" ❈ %s - 打开命令面板, %s - 切换焦点, %s - 数据库选择, %s - 退出",
+		" ❈ %s - open command panel, %s - switch focus, %s - quit",
 		ui.keyBindings.Name("command"),
 		ui.keyBindings.Name("switch_focus"),
 		ui.keyBindings.Name("db_selector"),
