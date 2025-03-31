@@ -799,7 +799,7 @@ func (ui *RedisTUI) createHelpPanel() *tview.Flex {
 
 	ui.helpMessagePanel = tview.NewTextView()
 	ui.helpMessagePanel.SetTextColor(tcell.ColorOrange).SetText(fmt.Sprintf(
-		" ❈ %s - open command panel, %s - switch focus, %s - quit",
+		" ❈ %s - open command panel, %s - switch focus, %s - switch db_selector %s - quit",
 		ui.keyBindings.Name("command"),
 		ui.keyBindings.Name("switch_focus"),
 		ui.keyBindings.Name("db_selector"),
