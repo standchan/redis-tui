@@ -129,43 +129,53 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 		name := ui.keyBindings.SearchKey(event.Key())
 		switch name {
 		case "switch_focus":
-			nextFocusIndex := ui.currentFocusIndex + 1
-			if nextFocusIndex > len(ui.focusPrimitives)-1 {
-				nextFocusIndex = 0
+			// 仅在searchPanel, dbSelectorPanel和keyItemsPanel三个面板之间切换
+			var nextPrimitive tview.Primitive
+
+			// 检查当前焦点是哪个面板
+			currentFocus := ui.app.GetFocus()
+
+			// 根据当前焦点决定下一个焦点
+			if currentFocus == ui.searchPanel {
+				nextPrimitive = ui.dbSelectorPanel
+			} else if currentFocus == ui.dbSelectorPanel {
+				nextPrimitive = ui.keyItemsPanel
+			} else if currentFocus == ui.keyItemsPanel {
+				nextPrimitive = ui.searchPanel
+			} else {
+				// 如果当前焦点不在上述三个面板中，默认切换到searchPanel
+				nextPrimitive = ui.searchPanel
 			}
 
 			// 重置所有面板边框颜色
-			for _, pv := range ui.focusPrimitives {
-				switch p := pv.Primitive.(type) {
-				case *tview.InputField:
-					p.SetBorderColor(tcell.ColorWhite)
-				case *tview.TextView:
-					p.SetBorderColor(tcell.ColorWhite)
-				case *tview.List:
-					p.SetBorderColor(tcell.ColorWhite)
-				case *tview.DropDown:
-					p.SetBorderColor(tcell.ColorWhite)
-				case *tview.Flex:
-					p.SetBorderColor(tcell.ColorWhite)
+			ui.searchPanel.SetBorderColor(tcell.ColorWhite)
+			ui.dbSelectorPanel.SetBorderColor(tcell.ColorWhite)
+			ui.keyItemsPanel.SetBorderColor(tcell.ColorWhite)
+
+			// 设置新焦点面板的边框颜色
+			switch nextPrimitive {
+			case ui.searchPanel:
+				ui.searchPanel.SetBorderColor(tcell.ColorYellow)
+			case ui.dbSelectorPanel:
+				ui.dbSelectorPanel.SetBorderColor(tcell.ColorYellow)
+			case ui.keyItemsPanel:
+				ui.keyItemsPanel.SetBorderColor(tcell.ColorYellow)
+			}
+
+			// 应用焦点
+			ui.app.SetFocus(nextPrimitive)
+
+			// 根据新焦点更新currentFocusIndex以保持状态一致
+			for i, p := range ui.focusPrimitives {
+				if p.Primitive == nextPrimitive {
+					ui.currentFocusIndex = i
+					break
 				}
 			}
 
-			// 设置当前聚焦面板的边框颜色
-			switch p := ui.focusPrimitives[nextFocusIndex].Primitive.(type) {
-			case *tview.InputField:
-				p.SetBorderColor(tcell.ColorYellow)
-			case *tview.TextView:
-				p.SetBorderColor(tcell.ColorYellow)
-			case *tview.List:
-				p.SetBorderColor(tcell.ColorYellow)
-			case *tview.DropDown:
-				p.SetBorderColor(tcell.ColorYellow)
-			case *tview.Flex:
-				p.SetBorderColor(tcell.ColorYellow)
+			if ui.config.Debug {
+				ui.outputChan <- core.OutputMessage{Message: fmt.Sprintf("Focus switched to %v", nextPrimitive)}
 			}
-
-			ui.app.SetFocus(ui.focusPrimitives[nextFocusIndex].Primitive)
-			ui.currentFocusIndex = nextFocusIndex
 
 			return nil
 		case "quit":
@@ -308,6 +318,14 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 
 // Start create the ui and start the program
 func (ui *RedisTUI) Start() error {
+	// 添加调试输出，显示所有focusPrimitives的信息
+	if ui.config.Debug {
+		ui.outputChan <- core.OutputMessage{Message: fmt.Sprintf("Total focusPrimitives: %d", len(ui.focusPrimitives))}
+		for i, p := range ui.focusPrimitives {
+			ui.outputChan <- core.OutputMessage{Message: fmt.Sprintf("Primitive[%d]: Key=%s", i, p.Key)}
+		}
+	}
+
 	go func() {
 		for {
 			select {
@@ -784,7 +802,8 @@ func (ui *RedisTUI) createOutputPanel() *tview.List {
 	outputArea := tview.NewList().ShowSecondaryText(false)
 	outputArea.SetBorder(true).SetTitle(fmt.Sprintf(" Output (%s) ", ui.keyBindings.Name("output")))
 
-	ui.focusPrimitives = append(ui.focusPrimitives, primitiveKey{Primitive: outputArea, Key: ui.keyBindings.KeyID("output")})
+	// 我们不希望输出面板在Tab序列中，所以不添加到focusPrimitives
+	// ui.focusPrimitives = append(ui.focusPrimitives, primitiveKey{Primitive: outputArea, Key: ui.keyBindings.KeyID("output")})
 
 	return outputArea
 }
