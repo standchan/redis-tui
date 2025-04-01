@@ -133,30 +133,48 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 			currentFocus := ui.app.GetFocus()
 			var nextPrimitive tview.Primitive
 
-			// 根据当前焦点决定下一个焦点
-			if currentFocus == ui.searchPanel {
-				nextPrimitive = ui.dbSelectorPanel
-			} else if currentFocus == ui.dbSelectorPanel {
-				nextPrimitive = ui.keyItemsPanel
-			} else if currentFocus == ui.keyItemsPanel {
-				if ui.commandMode {
-					nextPrimitive = ui.commandInputField
-				} else {
-					nextPrimitive = ui.searchPanel
-				}
-			} else if currentFocus == ui.commandInputField {
-				nextPrimitive = ui.searchPanel
-			} else {
-				nextPrimitive = ui.searchPanel
+			// 定义焦点切换顺序
+			focusOrder := []tview.Primitive{
+				ui.searchPanel,
+				ui.dbSelectorPanel,
+				ui.keyItemsPanel,
 			}
 
+			// 如果在命令模式下，添加命令面板到焦点顺序中
+			if ui.commandMode {
+				focusOrder = append(focusOrder, ui.commandInputField)
+			}
+
+			// 找到当前焦点在顺序中的位置
+			currentIndex := -1
+			for i, p := range focusOrder {
+				if p == currentFocus {
+					currentIndex = i
+					break
+				}
+			}
+
+			// 计算下一个焦点
+			if currentIndex == -1 {
+				// 如果当前焦点不在顺序中，默认切换到搜索面板
+				nextPrimitive = ui.searchPanel
+			} else {
+				// 切换到下一个焦点，如果是最后一个则回到第一个
+				nextIndex := (currentIndex + 1) % len(focusOrder)
+				nextPrimitive = focusOrder[nextIndex]
+			}
+
+			// 重置所有面板的边框颜色
 			ui.searchPanel.SetBorderColor(tcell.ColorWhite)
 			ui.dbSelectorPanel.SetBorderColor(tcell.ColorWhite)
 			ui.keyItemsPanel.SetBorderColor(tcell.ColorWhite)
-			if ui.commandInputField != nil {
-				ui.commandInputField.SetBorderColor(tcell.ColorWhite)
+			if ui.commandMode {
+				if ui.commandInputField != nil {
+					ui.commandInputField.SetBorderColor(tcell.ColorWhite)
+				}
 			}
 
+			// 设置下一个焦点的边框颜色
 			switch nextPrimitive {
 			case ui.searchPanel:
 				ui.searchPanel.SetBorderColor(tcell.ColorYellow)
@@ -165,11 +183,14 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 			case ui.keyItemsPanel:
 				ui.keyItemsPanel.SetBorderColor(tcell.ColorYellow)
 			case ui.commandInputField:
-				ui.commandInputField.SetBorderColor(tcell.ColorYellow)
+				if ui.commandInputField != nil {
+					ui.commandInputField.SetBorderColor(tcell.ColorYellow)
+				}
 			}
 
 			ui.app.SetFocus(nextPrimitive)
 
+			// 更新当前焦点索引
 			for i, p := range ui.focusPrimitives {
 				if p.Primitive == nextPrimitive {
 					ui.currentFocusIndex = i
@@ -201,6 +222,7 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 					if p.Primitive == ui.commandInputField {
 						ui.app.SetFocus(ui.commandInputField)
 						ui.currentFocusIndex = i
+						ui.commandInputField.SetBorderColor(tcell.ColorYellow)
 						break
 					}
 				}
