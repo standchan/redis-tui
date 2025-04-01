@@ -181,9 +181,8 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 			case ui.keyItemsPanel:
 				ui.keyItemsPanel.SetBorderColor(tcell.ColorYellow)
 			case ui.commandInputField:
-				if ui.commandInputField != nil {
-					ui.commandInputField.SetBorderColor(tcell.ColorYellow)
-				}
+				ui.commandInputField.SetBorderColor(tcell.ColorYellow)
+				ui.outputChan <- core.OutputMessage{Message: "Set commandInputField color yellow"}
 			}
 
 			ui.app.SetFocus(nextPrimitive)
