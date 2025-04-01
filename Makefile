@@ -6,7 +6,7 @@ run-dev: build
 	./bin/redis-tui -h 127.0.0.1 2>xxx.log
 
 run: build 
-	./bin/redis-tui
+	./bin/redis-tui -vvv
 
 build:
 	go build -race -ldflags $(LDFLAGS) -o bin/redis-tui *.go

@@ -115,6 +115,7 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 	ui.focusPrimitives = append(ui.focusPrimitives, primitiveKey{Primitive: ui.searchPanel, Key: ui.keyBindings.KeyID("search")})
 	ui.focusPrimitives = append(ui.focusPrimitives, primitiveKey{Primitive: ui.dbSelectorPanel, Key: ui.keyBindings.KeyID("db_selector")})
 	ui.focusPrimitives = append(ui.focusPrimitives, primitiveKey{Primitive: ui.keyItemsPanel, Key: ui.keyBindings.KeyID("keys")})
+	ui.focusPrimitives = append(ui.focusPrimitives, primitiveKey{Primitive: ui.commandInputField, Key: ui.keyBindings.KeyID("command")})
 
 	ui.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 
@@ -133,19 +134,16 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 			currentFocus := ui.app.GetFocus()
 			var nextPrimitive tview.Primitive
 
-			// 定义焦点切换顺序
 			focusOrder := []tview.Primitive{
 				ui.searchPanel,
 				ui.dbSelectorPanel,
 				ui.keyItemsPanel,
 			}
 
-			// 如果在命令模式下，添加命令面板到焦点顺序中
 			if ui.commandMode {
 				focusOrder = append(focusOrder, ui.commandInputField)
 			}
 
-			// 找到当前焦点在顺序中的位置
 			currentIndex := -1
 			for i, p := range focusOrder {
 				if p == currentFocus {
@@ -317,22 +315,6 @@ func (ui *RedisTUI) Start() error {
 
 			for i, k := range limit(keys, ui.maxKeyLimit) {
 				ui.keyItemsPanel.AddItem(ui.keyItemsFormat(i, k), "", 0, ui.itemSelectedHandler(i, k))
-			}
-
-			// 重置所有面板边框颜色
-			for _, pv := range ui.focusPrimitives {
-				switch p := pv.Primitive.(type) {
-				case *tview.InputField:
-					p.SetBorderColor(tcell.ColorWhite)
-				case *tview.TextView:
-					p.SetBorderColor(tcell.ColorWhite)
-				case *tview.List:
-					p.SetBorderColor(tcell.ColorWhite)
-				case *tview.DropDown:
-					p.SetBorderColor(tcell.ColorWhite)
-				case *tview.Flex:
-					p.SetBorderColor(tcell.ColorWhite)
-				}
 			}
 
 			// 设置搜索面板的边框颜色为黄色
