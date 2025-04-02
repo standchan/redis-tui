@@ -1,6 +1,10 @@
 TODO:
 - 增加 SetMouseCapture
+- 增加 账号密码等功能，包括保存等等
+- 上线 homebrew 包
+- 支持最新的redis版本
 
-- 使用 go 1.21
-- 增加 db 选择
+Done:
+- 升级使用 go 1.21,并解决了一些兼容性问题
+- 增加 db 选择器
 - 增加 help panel 面板输出

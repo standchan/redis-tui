@@ -166,11 +166,6 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 			ui.searchPanel.SetBorderColor(tcell.ColorWhite)
 			ui.dbSelectorPanel.SetBorderColor(tcell.ColorWhite)
 			ui.keyItemsPanel.SetBorderColor(tcell.ColorWhite)
-			if ui.commandMode {
-				if ui.commandInputField != nil {
-					ui.commandInputField.SetBorderColor(tcell.ColorWhite)
-				}
-			}
 
 			// 设置下一个焦点的边框颜色
 			switch nextPrimitive {
@@ -182,7 +177,7 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 				ui.keyItemsPanel.SetBorderColor(tcell.ColorYellow)
 			case ui.commandInputField:
 				ui.commandInputField.SetBorderColor(tcell.ColorYellow)
-				ui.outputChan <- core.OutputMessage{Message: "Set commandInputField color yellow"}
+				ui.outputChan <- core.OutputMessage{Message: "Set commandInputField color yellow,switch_focus"}
 			}
 
 			ui.app.SetFocus(nextPrimitive)
@@ -207,9 +202,9 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 				ui.commandMode = false
 				ui.redrawRightPanel(ui.mainPanel)
 				ui.app.SetFocus(ui.searchPanel)
+				ui.searchPanel.SetBorderColor(tcell.ColorYellow)
 				ui.dbSelectorPanel.SetBorderColor(tcell.ColorWhite)
 				ui.keyItemsPanel.SetBorderColor(tcell.ColorWhite)
-				ui.searchPanel.SetBorderColor(tcell.ColorYellow)
 				ui.currentFocusIndex = 0
 			} else {
 				ui.commandMode = true
@@ -220,6 +215,7 @@ func NewRedisTUI(redisClient api.RedisClient, maxKeyLimit int, version string, g
 						ui.app.SetFocus(ui.commandInputField)
 						ui.currentFocusIndex = i
 						ui.commandInputField.SetBorderColor(tcell.ColorYellow)
+						ui.outputChan <- core.OutputMessage{Message: "Set commandInputField color yellow,command"}
 						break
 					}
 				}
@@ -882,31 +878,23 @@ func limit(input []string, maxReturn int) []string {
 func (ui *RedisTUI) createDBSelectorPanel() *tview.DropDown {
 	dbSelector := tview.NewDropDown().SetLabel(" DB ")
 
-	// 添加 0-15 号数据库选项
 	for i := 0; i < 16; i++ {
 		dbSelector.AddOption(fmt.Sprintf("%d", i), nil)
 	}
 
-	// 设置当前选中的数据库
 	dbSelector.SetCurrentOption(ui.config.DB)
 
-	// 设置选择变更处理函数
 	dbSelector.SetSelectedFunc(func(text string, index int) {
 		if index == ui.config.DB {
-			return // 如果选择的是当前数据库，不做任何操作
+			return
 		}
 
-		// 更新配置
 		ui.config.DB = index
 
-		// 创建新的 Redis 客户端
 		newClient := api.NewRedisClient(ui.config, ui.outputChan)
 		ui.redisClient = newClient
 
-		// 清空键列表
 		ui.keyItemsPanel.Clear()
-
-		// 更新服务器信息
 		go func() {
 			info, err := api.RedisServerInfo(ui.config, ui.redisClient)
 			if err != nil {
@@ -918,7 +906,6 @@ func (ui *RedisTUI) createDBSelectorPanel() *tview.DropDown {
 				ui.helpServerInfoPanel.SetText(info)
 			}
 
-			// 重新加载键列表
 			keys, err := api.RedisAllKeys(ui.redisClient, false)
 			if err != nil {
 				ui.outputChan <- core.OutputMessage{Color: tcell.ColorRed, Message: fmt.Sprintf("errors: %s", err)}
